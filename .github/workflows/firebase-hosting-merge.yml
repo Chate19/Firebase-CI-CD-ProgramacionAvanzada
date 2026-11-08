@@ -1,0 +1,58 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  Pipeline de PRODUCCIÓN: lo que se mergea a `main` se publica en el canal
+#  `live` de Firebase Hosting.
+#
+#  Buscá los comentarios "TODO A?" y completalos según el enunciado.
+# ─────────────────────────────────────────────────────────────────────────────
+name: Deploy a producción
+
+# TODO A1: Cambiá el trigger para que corra en cada push a la rama `main`.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# TODO A4 (opcional): en producción NO queremos cancelar un deploy a mitad de
+#                     camino, pero sí evitar dos deploys en paralelo.
+#                     ¿Cómo configurás `concurrency` para eso?
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    # TODO A5 (opcional): asociá este job a un GitHub Environment llamado
+    #                     `production` (permite exigir aprobación manual).
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # TODO A2: igual que en el workflow de PR, pero con los datos del push a main.
+      #          Pistas: github.sha, github.ref_name
+      - name: Build (export estático)
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          NEXT_PUBLIC_BUILD_SHA: "TODO"
+          NEXT_PUBLIC_BUILD_REF: "TODO"
+          NEXT_PUBLIC_BUILD_TIME: ${{ github.event.head_commit.timestamp }}
+
+      - name: Deploy al canal live
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          # TODO A3: mismo secreto que en el workflow de PR.
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_REEMPLAZAR }}
+          projectId: REEMPLAZAR-POR-TU-PROJECT-ID
+          # TODO A3: ¿qué valor de channelId publica en producción?
+          # channelId: ???

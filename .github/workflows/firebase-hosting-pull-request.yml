@@ -1,0 +1,62 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  Pipeline de PREVIEW: cada Pull Request se despliega en un "preview channel"
+#  de Firebase Hosting (URL propia, temporal, aislada de producción).
+#
+#  Buscá los comentarios "TODO A?" y completalos según el enunciado.
+#  Mientras el trigger sea solo `workflow_dispatch`, el workflow NO corre solo.
+# ─────────────────────────────────────────────────────────────────────────────
+name: Preview en Pull Request
+
+# TODO A1: Cambiá el trigger para que este workflow corra en cada Pull Request.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write # la action comenta la URL del preview en el PR
+
+# TODO A4 (opcional): agregá un bloque `concurrency` para que, si se pushea dos
+#                     veces seguidas al mismo PR, se cancele el build anterior.
+
+jobs:
+  build_and_preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # TODO A2: Completá las variables de entorno del build con los datos del
+      #          commit, para que el footer muestre qué versión está desplegada.
+      #          Pistas: github.event.pull_request.head.sha, github.head_ref
+      - name: Build (export estático)
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          NEXT_PUBLIC_BUILD_SHA: "TODO"
+          NEXT_PUBLIC_BUILD_REF: "TODO"
+          NEXT_PUBLIC_BUILD_TIME: ${{ github.event.pull_request.updated_at }}
+
+      - name: Deploy a preview channel
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          # TODO A3: Reemplazá el nombre del secreto por el que creó
+          #          `firebase init hosting:github` en tu repo
+          #          (Settings → Secrets and variables → Actions).
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_REEMPLAZAR }}
+          projectId: REEMPLAZAR-POR-TU-PROJECT-ID
+          # TODO A3: Definí cuánto tiempo vive el preview (ej. 3d). ¿Por qué no conviene que viva para siempre?
+          # expires: ???
