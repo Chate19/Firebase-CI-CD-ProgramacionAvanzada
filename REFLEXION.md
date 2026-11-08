@@ -34,12 +34,12 @@ un deploy o un rollback podía tardar hasta una hora en verse.
 ## B5 · Medición final (después del hardening)
 
 Salida de `node scripts/check-headers.mjs https://practica-cicd-chate.web.app` sobre el
-primer deploy hardened (merge del PR #1):
+deploy final (merge del PR #2, footer `bea48b3`):
 
 ```text
 ▶ HTML: https://practica-cicd-chate.web.app/
   status 200
-  ✔ content-security-policy: default-src 'self'; script-src 'self' 'sha256-A3e2Y+5MAzTsn/0mVzYTzDskfvW3NdjEJHyK6WrkD2Q=' 'sha256-OBTN3RiyCV…
+  ✔ content-security-policy: default-src 'self'; script-src 'self' 'sha256-0dC29qV4rjMFaZJYnk0Xrwr5uLDv8lLN53cbhqsfAn0=' 'sha256-OBTN3RiyCV…
   ✔ strict-transport-security: max-age=31556926; includeSubDomains; preload
   ✔ x-content-type-options: nosniff
   ✔ x-frame-options: DENY
@@ -197,12 +197,36 @@ monitoreo, logs y backups. Para este catálogo estático, ese costo no se justif
 
 ## Rollback y promoción (A6)
 
-<!-- A6_NOTES -->
+Versiones involucradas:
+
+- `ee2501f` — merge del PR #1 (primer deploy hardened).
+- `bea48b3` — merge del PR #2 (deploy final, versión viva al cerrar la práctica).
+- `2385bcf` — último commit del PR #2 (versión del preview channel).
+
+1. **Rollback:** se creó un release en `live` apuntando a la versión
+   `122ae542b04a8f09` (footer `ee2501f`). Verificado: el footer pasó de `bea48b3` a
+   `ee2501f`, y los headers, el filtro y la imagen siguieron funcionando.
+2. **Restauración:** se creó un release en `live` apuntando a la versión
+   `6810ec43970cc9b2` (footer `bea48b3`). Verificado.
+3. **Bonus promoción:** `npx firebase hosting:clone
+   practica-cicd-chate:pr2-fix-verify-retries practica-cicd-chate:live` promovió el
+   preview a producción sin recompilar. El footer mostró `2385bcf`; después se restauró
+   `bea48b3`.
+
+Después del rollback, `main` sigue teniendo el código nuevo. El próximo merge/push a
+`main` vuelve a desplegar el código de `main`: el rollback no “arregla” Git. En un equipo
+real el rollback es una mitigación inmediata; después se hace un revert del commit que
+rompió (o un fix-forward), se deja que el pipeline libere de nuevo y se documenta el
+incidente. El rollback de la consola y el `hosting:clone` crean un release nuevo sobre
+`live`; no reescriben la historia ni el estado de `main`.
 
 ## Entregables
 
 1. Repo: <https://github.com/Chate19/Firebase-CI-CD-ProgramacionAvanzada>
 2. Producción: <https://practica-cicd-chate.web.app>
-3. PR mergeado con comentario del bot: <https://github.com/Chate19/Firebase-CI-CD-ProgramacionAvanzada/pull/1>
+3. PRs mergeados con comentario del bot:
+   - <https://github.com/Chate19/Firebase-CI-CD-ProgramacionAvanzada/pull/1> (pipeline + hardening)
+   - <https://github.com/Chate19/Firebase-CI-CD-ProgramacionAvanzada/pull/2> (reintentos del gate + B5)
 4. Salidas de `check-headers.mjs`: B1 y B5 en este archivo.
 5. Reflexión: este archivo.
+6. Versión viva al cerrar: footer `bea48b3` en <https://practica-cicd-chate.web.app>.
