@@ -31,15 +31,21 @@ El único header de seguridad presente era el HSTS que agrega Firebase Hosting p
 cuenta. Además, HTML y assets compartían el mismo `Cache-Control: max-age=3600`, así que
 un deploy o un rollback podía tardar hasta una hora en verse.
 
+Medición con <https://securityheaders.com> en ese estado inicial: **D**. Para reconstruirla
+se desplegó el commit base (`49c76cd`, con `"headers": []`) en un canal temporal y se
+escaneó esa URL; el resultado fue el mismo que el de producción antes del hardening: solo
+HSTS presente, sin CSP, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` ni
+`Permissions-Policy`. El canal temporal se borró después de medir.
+
 ## B5 · Medición final (después del hardening)
 
 Salida de `node scripts/check-headers.mjs https://practica-cicd-chate.web.app` sobre el
-deploy final (merge del PR #2, footer `bea48b3`):
+deploy final (merge del PR #3, footer `6d607a9`):
 
 ```text
 ▶ HTML: https://practica-cicd-chate.web.app/
   status 200
-  ✔ content-security-policy: default-src 'self'; script-src 'self' 'sha256-0dC29qV4rjMFaZJYnk0Xrwr5uLDv8lLN53cbhqsfAn0=' 'sha256-OBTN3RiyCV…
+  ✔ content-security-policy: default-src 'self'; script-src 'self' 'sha256-9Pt889F4R3qOnpWeW94nSMdM2O7pizigMXGvx7AupqA=' 'sha256-OBTN3RiyCV…
   ✔ strict-transport-security: max-age=31556926; includeSubDomains; preload
   ✔ x-content-type-options: nosniff
   ✔ x-frame-options: DENY
@@ -53,10 +59,14 @@ deploy final (merge del PR #2, footer `bea48b3`):
 ✅ Todos los controles pasaron.
 ```
 
-Nota sobre HSTS: Firebase Hosting administra ese header por su cuenta y sirve
-`max-age=31556926; includeSubDomains; preload`, aun cuando `firebase.json` declare otro
-`max-age`. El header está presente y cumple el objetivo; el valor efectivo es el de la
-plataforma.
+Medición final con <https://securityheaders.com>: **A+** (reporte del 08 Nov 2026 22:45
+UTC), con los seis headers evaluados presentes.
+
+Nota sobre HSTS: `firebase.template.json` declara `max-age=63072000` (2 años), pero
+Firebase Hosting administra ese header por su cuenta y sirve
+`max-age=31556926; includeSubDomains; preload` (~1 año), aun cuando la configuración
+declare otro valor. El header está presente y cumple el objetivo; el valor efectivo es el
+de la plataforma.
 
 ## Cómo se resolvió la CSP (sin `'unsafe-inline'`)
 
@@ -148,8 +158,9 @@ También hubo que ajustar `img-src`: la portada viene de `picsum.photos`, que re
 ### 5. Para cada header de B2, ¿qué ataque mitiga?
 
 - **Strict-Transport-Security:** mitiga *SSL stripping* y downgrades a HTTP en visitas
-  posteriores. `max-age=63072000` (2 años) + `includeSubDomains` + `preload` fuerza HTTPS
-  en todo el sitio y subdominios.
+  posteriores. Se configuró `max-age=63072000` (2 años) + `includeSubDomains` + `preload`;
+  Firebase sirve efectivamente `max-age=31556926` (~1 año) con las mismas directivas, y
+  eso fuerza HTTPS en todo el sitio y subdominios.
 - **X-Content-Type-Options: nosniff:** evita que el navegador “adivine” el tipo de un
   archivo; mitiga confusión de MIME y XSS a través de archivos que el navegador interpreta
   como HTML/JS aunque el servidor declare otro tipo.
@@ -195,23 +206,32 @@ Costo: el plan Spark no alcanza; App Hosting/Cloud Run requiere Blaze (facturaci
 costo por CPU/memoria, instancias mínimas, cold starts y escalado. Además hay que sumar
 monitoreo, logs y backups. Para este catálogo estático, ese costo no se justifica.
 
-## Rollback y promoción (A6)
+## Ciclo completo, rollback y promoción (A6)
 
 Versiones involucradas:
 
 - `ee2501f` — merge del PR #1 (primer deploy hardened).
-- `bea48b3` — merge del PR #2 (deploy final, versión viva al cerrar la práctica).
+- `bea48b3` — merge del PR #2 (versión viva sobre la que se practicó el rollback).
 - `2385bcf` — último commit del PR #2 (versión del preview channel).
+- `902c821` — commit de `feat/titulo` (título nuevo).
+- `6d607a9` — merge del PR #3 (versión viva al cerrar la práctica).
 
-1. **Rollback:** se creó un release en `live` apuntando a la versión
-   `122ae542b04a8f09` (footer `ee2501f`). Verificado: el footer pasó de `bea48b3` a
-   `ee2501f`, y los headers, el filtro y la imagen siguieron funcionando.
-2. **Restauración:** se creó un release en `live` apuntando a la versión
+1. **Ciclo con cambio visible (pasos 1–3):** se creó la rama `feat/titulo`, se cambió el
+   `<h1>` de `app/page.tsx` a “Catálogo de Cursos · Edición 2026” y se abrió el
+   [PR #3](https://github.com/Chate19/Firebase-CI-CD-ProgramacionAvanzada/pull/3). El
+   preview mostró el título nuevo con footer `902c821` y rama `feat/titulo`, mientras
+   producción seguía con el título anterior y `bea48b3`. Después del merge, producción
+   mostró el título nuevo y el footer `6d607a9`.
+2. **Rollback (paso 4):** sobre la versión `bea48b3` se creó un release en `live`
+   apuntando a la versión `122ae542b04a8f09` (footer `ee2501f`). Verificado: el footer
+   pasó de `bea48b3` a `ee2501f`, y los headers, el filtro y la imagen siguieron
+   funcionando.
+3. **Restauración:** se creó un release en `live` apuntando a la versión
    `6810ec43970cc9b2` (footer `bea48b3`). Verificado.
-3. **Bonus promoción:** `npx firebase hosting:clone
+4. **Bonus promoción (paso 5):** `npx firebase hosting:clone
    practica-cicd-chate:pr2-fix-verify-retries practica-cicd-chate:live` promovió el
    preview a producción sin recompilar. El footer mostró `2385bcf`; después se restauró
-   `bea48b3`.
+   `bea48b3` y más tarde el merge del PR #3 liberó `6d607a9`.
 
 Después del rollback, `main` sigue teniendo el código nuevo. El próximo merge/push a
 `main` vuelve a desplegar el código de `main`: el rollback no “arregla” Git. En un equipo
@@ -227,6 +247,8 @@ incidente. El rollback de la consola y el `hosting:clone` crean un release nuevo
 3. PRs mergeados con comentario del bot:
    - <https://github.com/Chate19/Firebase-CI-CD-ProgramacionAvanzada/pull/1> (pipeline + hardening)
    - <https://github.com/Chate19/Firebase-CI-CD-ProgramacionAvanzada/pull/2> (reintentos del gate + B5)
-4. Salidas de `check-headers.mjs`: B1 y B5 en este archivo.
+   - <https://github.com/Chate19/Firebase-CI-CD-ProgramacionAvanzada/pull/3> (ciclo A6: cambio de título)
+4. Salidas de `check-headers.mjs`: B1 y B5 en este archivo, más la comparación de
+   securityheaders.com (**D** inicial → **A+** final).
 5. Reflexión: este archivo.
-6. Versión viva al cerrar: footer `bea48b3` en <https://practica-cicd-chate.web.app>.
+6. Versión viva al cerrar: footer `6d607a9` en <https://practica-cicd-chate.web.app>.
