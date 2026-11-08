@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/generate-csp.mjs",
+    "csp:hashes": "node scripts/generate-csp.mjs",
     "typecheck": "tsc --noEmit",
     "serve": "firebase emulators:start --only hosting",
     "deploy:preview": "firebase hosting:channel:deploy local-test --expires 1d"

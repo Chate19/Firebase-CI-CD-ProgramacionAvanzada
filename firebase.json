@@ -3,7 +3,37 @@
     "public": "out",
     "cleanUrls": true,
     "trailingSlash": false,
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "headers": []
+    "ignore": ["firebase.json", "firebase.template.json", "**/.*", "**/node_modules/**"],
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "Strict-Transport-Security",
+            "value": "max-age=63072000; includeSubDomains; preload"
+          },
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "X-Frame-Options", "value": "DENY" },
+          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+          {
+            "key": "Permissions-Policy",
+            "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), fullscreen=(self), interest-cohort=()"
+          },
+          { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+          { "key": "Cross-Origin-Resource-Policy", "value": "same-origin" },
+          {
+            "key": "Content-Security-Policy",
+            "value": "default-src 'self'; script-src 'self' 'sha256-AlWtUixjvD9XMzTGPlqEklZrgOZQT7HwbUCJjmy7Wng=' 'sha256-CobxyTyHtsLFr61FnYk94HF9K8TInPzXVHy4hU6yBCE=' 'sha256-DQZ8CHjvzM7GoZKgpyLKK1sxiZ+7kHOSdEP/nnTsUmg=' 'sha256-DePNGG0KYuYWfUMgvHtDcUomD/qD1+g3bQiVXnq2/t8=' 'sha256-JhkZJUuALKVEUPw9+Hg3eL5Ey3BUHAzL531I3QBOI6I=' 'sha256-L0X6ey6kbIk3k+WFgAbdBIGdtWSB1NtTvgH+addtmmo=' 'sha256-OBTN3RiyCV4Bq7dFqZ5a2pAXjnCcCYeTJMO2I/LYKeo=' 'sha256-b7rRo76tN7XepWMKAzAjNeadTNZU5tnlhSQ/ixWyxgs=' 'sha256-ilnvIjZbJyJS5w0wksE3EOXxyUTLJm0gObV+Pkk6lKE=' 'sha256-oCrerGVnNdyRf6T/JU3ghlEd7CeaSJjlVO8iowivDq0=' 'sha256-ohBYDP4jDEhpM4V4o0iLmc/txsVyq1JPbtSx6ah7HBw=' 'sha256-omA5X3YFN1quRq/b4/I/F2jjgArLfo2ZwjqWcRTydlk=' 'sha256-pSbB9DN68FKEB+ZR47w72TN8wnmdXuvcIbcxOJJME4M=' 'sha256-u3HsHCA4m5o1ft4BMWLkRupXMFBntK5wV2mRZ5k/30Q=' 'sha256-u9qL0ji57AI7CN7nfNDt0XTrFXuQHfi5T8y5K7nivbk=' 'sha256-xpp91qsAgz28ZpJYVC4nKjMF1zI1dPrHLGqfYgnFWTE='; style-src 'self'; img-src 'self' https://picsum.photos https://fastly.picsum.photos; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+          },
+          { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+        ]
+      },
+      {
+        "source": "/_next/static/**",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        ]
+      }
+    ]
   }
 }

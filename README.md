@@ -26,7 +26,8 @@ camino a producción y endurecer la seguridad de lo que se sirve.
 | Pieza | Rol |
 |---|---|
 | `next.config.ts` | `output: "export"` → `next build` genera HTML/JS/CSS estáticos en `out/` |
-| `firebase.json` | Qué carpeta se publica, URLs limpias y **headers HTTP** (lo completás vos) |
+| `firebase.template.json` | Fuente de verdad de qué carpeta se publica, URLs limpias y **headers HTTP** |
+| `firebase.json` | Config generada desde el template por `npm run build` (incluye los hashes CSP) |
 | `.github/workflows/*.yml` | Pipelines de preview (PR) y producción (merge a `main`) — **con TODOs** |
 | `scripts/check-headers.mjs` | Verifica los headers de seguridad y caché de un despliegue |
 | Footer de la app | Muestra commit, rama y fecha de build → sirve para saber qué versión está viva |
@@ -98,7 +99,12 @@ Promover un preview a producción sin rebuild:
 npx firebase hosting:clone <PROJECT_ID>:<CANAL_PREVIEW> <PROJECT_ID>:live
 ```
 
-### Parte B — Headers de seguridad y caché (en `firebase.json`)
+### Parte B — Headers de seguridad y caché (en `firebase.template.json`)
+
+> `firebase.json` es **generado**: editá `firebase.template.json` y corré `npm run build`.
+> El `postbuild` (`scripts/generate-csp.mjs`) calcula los hashes SHA-256 de los scripts
+> inline del export y los inyecta en la CSP. Así la política funciona sin
+> `'unsafe-inline'` y sin nonces (no hay servidor que los genere).
 
 1. Medí el estado inicial:
    ```bash
@@ -138,7 +144,8 @@ Formato de un header en `firebase.json`:
 | Comando | Para qué |
 |---|---|
 | `npm run dev` | Desarrollo local con hot reload (no aplica headers de `firebase.json`) |
-| `npm run build` | Export estático a `out/` |
+| `npm run build` | Export estático a `out/` y regeneración de `firebase.json` con los hashes CSP |
+| `npm run csp:hashes` | Recalcula solo los hashes CSP sobre un `out/` ya construido |
 | `npm run serve` | Emulador de Hosting: sirve `out/` **con** los headers de `firebase.json` |
 | `npm run typecheck` | Chequeo de tipos (también corre en el pipeline) |
 | `npx firebase hosting:channel:list` | Lista canales de preview y sus vencimientos |
