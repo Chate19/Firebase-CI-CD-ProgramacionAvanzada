@@ -33,7 +33,30 @@ un deploy o un rollback podía tardar hasta una hora en verse.
 
 ## B5 · Medición final (después del hardening)
 
-<!-- B5_OUTPUT -->
+Salida de `node scripts/check-headers.mjs https://practica-cicd-chate.web.app` sobre el
+primer deploy hardened (merge del PR #1):
+
+```text
+▶ HTML: https://practica-cicd-chate.web.app/
+  status 200
+  ✔ content-security-policy: default-src 'self'; script-src 'self' 'sha256-A3e2Y+5MAzTsn/0mVzYTzDskfvW3NdjEJHyK6WrkD2Q=' 'sha256-OBTN3RiyCV…
+  ✔ strict-transport-security: max-age=31556926; includeSubDomains; preload
+  ✔ x-content-type-options: nosniff
+  ✔ x-frame-options: DENY
+  ✔ referrer-policy: strict-origin-when-cross-origin
+  ✔ permissions-policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(),…
+  · cache-control: public, max-age=0, must-revalidate
+
+▶ Asset estático: /_next/static/chunks/1x6obpmlu1_c2.js
+  ✔ cache-control: public, max-age=31536000, immutable
+
+✅ Todos los controles pasaron.
+```
+
+Nota sobre HSTS: Firebase Hosting administra ese header por su cuenta y sirve
+`max-age=31556926; includeSubDomains; preload`, aun cuando `firebase.json` declare otro
+`max-age`. El header está presente y cumple el objetivo; el valor efectivo es el de la
+plataforma.
 
 ## Cómo se resolvió la CSP (sin `'unsafe-inline'`)
 
@@ -180,6 +203,6 @@ monitoreo, logs y backups. Para este catálogo estático, ese costo no se justif
 
 1. Repo: <https://github.com/Chate19/Firebase-CI-CD-ProgramacionAvanzada>
 2. Producción: <https://practica-cicd-chate.web.app>
-3. PR mergeado con comentario del bot: <!-- PR_LINK -->
+3. PR mergeado con comentario del bot: <https://github.com/Chate19/Firebase-CI-CD-ProgramacionAvanzada/pull/1>
 4. Salidas de `check-headers.mjs`: B1 y B5 en este archivo.
 5. Reflexión: este archivo.
