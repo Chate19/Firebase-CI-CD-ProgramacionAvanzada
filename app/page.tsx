@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function HomePage() {
   return (
     <section>
-      <h1>Bienvenidos al Catálogo de Cursos</h1>
+      <h1>Catálogo de Cursos · Edición 2026</h1>
       <p className="lead">
         Esta app es el punto de partida de la práctica. No vas a programar features: vas a
         construir el <strong>camino a producción</strong> (pipeline, entornos de preview,
