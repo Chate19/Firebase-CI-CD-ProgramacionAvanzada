@@ -66,5 +66,15 @@ jobs:
           expires: 3d
 
       # Gate: el preview no se considera válido si perdió headers o caché.
+      # Reintentamos por si el CDN tarda unos segundos en propagar el release.
       - name: Verificar headers del preview
-        run: node scripts/check-headers.mjs "${{ steps.deploy.outputs.details_url }}"
+        run: |
+          for intento in 1 2 3 4 5 6; do
+            echo "Intento $intento..."
+            if node scripts/check-headers.mjs "${{ steps.deploy.outputs.details_url }}"; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "❌ La verificación falló tras 6 intentos."
+          exit 1
