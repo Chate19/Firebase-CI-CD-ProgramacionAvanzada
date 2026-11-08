@@ -61,15 +61,15 @@ jobs:
           channelId: live
 
       # Gate: verificamos la URL pública recién publicada.
-      # Reintentamos porque el CDN de Hosting puede tardar unos segundos.
+      # Reintentamos hasta 3 minutos: el CDN de Hosting puede tardar en propagar.
       - name: Verificar headers en producción
         run: |
-          for intento in 1 2 3 4 5 6; do
-            echo "Intento $intento..."
+          for intento in $(seq 1 18); do
+            echo "Intento $intento/18..."
             if node scripts/check-headers.mjs "https://practica-cicd-chate.web.app"; then
               exit 0
             fi
             sleep 10
           done
-          echo "❌ La verificación falló tras 6 intentos."
+          echo "❌ La verificación falló tras 18 intentos."
           exit 1
