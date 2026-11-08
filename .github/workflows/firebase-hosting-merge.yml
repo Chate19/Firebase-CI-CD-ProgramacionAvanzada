@@ -50,7 +50,7 @@ jobs:
           NEXT_TELEMETRY_DISABLED: 1
           NEXT_PUBLIC_BUILD_SHA: ${{ github.sha }}
           NEXT_PUBLIC_BUILD_REF: ${{ github.ref_name }}
-          NEXT_PUBLIC_BUILD_TIME: ${{ github.run_started_at }}
+          NEXT_PUBLIC_BUILD_TIME: ${{ github.event.head_commit.timestamp }}
 
       # A3: `channelId: live` publica en producción.
       - name: Deploy al canal live

@@ -8,5 +8,5 @@
 export const buildInfo = {
   commit: process.env.NEXT_PUBLIC_BUILD_SHA?.slice(0, 7) ?? "local",
   branch: process.env.NEXT_PUBLIC_BUILD_REF ?? "local",
-  builtAt: process.env.NEXT_PUBLIC_BUILD_TIME ?? "sin fecha (build local)",
+  builtAt: process.env.NEXT_PUBLIC_BUILD_TIME || "sin fecha (build local)",
 };

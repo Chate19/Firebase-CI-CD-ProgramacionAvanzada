@@ -53,7 +53,7 @@ jobs:
           NEXT_TELEMETRY_DISABLED: 1
           NEXT_PUBLIC_BUILD_SHA: ${{ github.event.pull_request.head.sha }}
           NEXT_PUBLIC_BUILD_REF: ${{ github.head_ref }}
-          NEXT_PUBLIC_BUILD_TIME: ${{ github.run_started_at }}
+          NEXT_PUBLIC_BUILD_TIME: ${{ github.event.pull_request.updated_at }}
 
       # A3: preview con vencimiento de 3 días.
       - name: Deploy a preview channel
